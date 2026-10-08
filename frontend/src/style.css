@@ -1,0 +1,16 @@
+:root { font-family: system-ui, sans-serif; color: #172d3b; background: #f4f7f9; }
+body { margin: 0; }
+main { max-width: 840px; margin: 40px auto; padding: 0 20px; }
+.eyebrow { color: #176b65; font-weight: 700; letter-spacing: .12em; }
+h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+section { margin: 28px 0; padding: 24px; background: white; border-radius: 12px; border: 1px solid #d9e2e8; }
+form { display: grid; gap: 16px; }
+label { display: grid; gap: 7px; font-weight: 600; }
+input, select, textarea { padding: 10px; font: inherit; border: 1px solid #93a6b3; border-radius: 6px; min-width: 0; }
+button { padding: 12px; font: inherit; border: 0; border-radius: 6px; background: #176b65; color: white; cursor: pointer; }
+button:disabled { opacity: .6; }
+article { border-top: 1px solid #d9e2e8; padding: 14px 0; }
+a { color: #175c98; }
+summary { cursor: pointer; margin-top: 12px; }
+.description { white-space: pre-wrap; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid #e7a12f; outline-offset: 3px; }
