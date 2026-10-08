@@ -1,5 +1,13 @@
 # Architecture and workflow decisions
 
+## Phase 2A implementation note
+
+Source upload and manual fact review are now implemented. `POST /sources` stores an exclusive private copy under a UUID; `GET /sources` lists registered versions; `GET /sources/{id}/integrity` checks stored bytes. Upload validates extension, size and basic format, without parsing document claims. It supports DOCX/PDF/UTF-8 TXT/MD and up to 10 MiB. Format checks are not malware scanning or a promise that every PDF is parseable. Files remain local; no LLM receives them.
+
+`POST /facts` creates immutable pending facts with document or user-confirmation provenance. `POST /facts/{id}/reviews` records a decision, verification basis and note, rejecting stale revisions. `GET /facts/{id}/reviews` returns history. A document hash is checked before a document-linked fact can be verified. Later drafting must recheck integrity and status when using evidence. Automatic extraction, many-to-many fact citations, application packet approvals and submission remain future work.
+
+The existing jobs workflow remains intact. `/ready` now checks all four application tables, so apply migration `0002` before starting the updated backend. Source metadata is in PostgreSQL; actual private bytes are in `private/sources`. Back up both. A process interruption between file write and DB commit can leave an orphaned copy; a future reconciliation utility can report these without deleting registered sources. The localhost-only boundary remains in place.
+
 ## Product contract
 
 Reduce repetitive application work while retaining accurate qualifications, meaningful tailoring and explicit human control. There is no guarantee of employment or inferred interview/hire probability. The system should make uncertainty and missing evidence visible.

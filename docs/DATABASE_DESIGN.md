@@ -1,6 +1,16 @@
 # Database design
 
-The running Phase 1 schema contains only `jobs` and Alembic's migration-version table. The other entities below are the intended design, not implemented tables. Add them through later reviewed migrations.
+Phase 1 contains `jobs`. Phase 2 migration `0002` adds `source_documents`, `career_facts`, and `fact_reviews`. All other entities in the long-term design below remain planned. Phase 2 uses one source per fact initially; the many-to-many evidence design can be added later.
+
+## Phase 2 implemented tables
+
+| Entity | Implemented fields and rules |
+| --- | --- |
+| `source_documents` | UUID, original filename, kind, version label, unique SHA-256, byte count, internal UUID filename, nullable previous-version FK, UTC creation time. Bytes and metadata are immutable through the API. |
+| `career_facts` | UUID, immutable statement/category/provenance/locator/evidence note, nullable document FK, status, revision counter, UTC creation time. Document provenance requires an existing source; user-confirmation provenance uses an attestation note instead. All facts start pending. |
+| `fact_reviews` | UUID, fact FK, revision, previous/new state, verification basis, review note, local-user actor label, UTC creation time. Review records are append-only through the API. |
+
+The API uses an atomic revision comparison to reject stale reviews. Database constraints enforce source linkage and status domains. Verified facts record a basis: user-confirmed, document-supported, or independently documented. A human selects this basis; the application does not independently establish truth. There is no source/fact edit or delete endpoint in this increment. Correct a claim by rejecting it and creating a replacement. Authentication is not implemented; `local_user` is a local-session label, not proof of identity.
 
 ## Implemented table
 

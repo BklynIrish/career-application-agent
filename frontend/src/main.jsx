@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
+import EvidencePanel from './EvidencePanel.jsx';
 
 async function request(path, options) {
   const response = await fetch(`/api${path}`, options);
@@ -10,6 +11,7 @@ async function request(path, options) {
 }
 
 function App() {
+  const [tab, setTab] = useState('jobs');
   const [jobs, setJobs] = useState([]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,9 +32,11 @@ function App() {
     finally { setBusy(false); }
   }
   return <main>
-    <p className="eyebrow">PROJECT 5 · PHASE 1</p>
+    <p className="eyebrow">PROJECT 5 · PHASE 2</p>
     <h1>Career Application Agent</h1>
     <p>Save opportunities for evidence-based review. Application submission is disabled.</p>
+    <nav aria-label="Workspace"><button className={tab === 'jobs' ? '' : 'secondary'} aria-pressed={tab === 'jobs'} onClick={() => setTab('jobs')}>Jobs</button><button className={tab === 'evidence' ? '' : 'secondary'} aria-pressed={tab === 'evidence'} onClick={() => setTab('evidence')}>Sources &amp; evidence</button></nav>
+    {tab === 'evidence' ? <EvidencePanel request={request} /> : <>
     <section><h2>Add an opportunity</h2>
       <form onSubmit={save}>
         <label>Job title<input name="title" required maxLength={200} /></label>
@@ -51,6 +55,7 @@ function App() {
         <details><summary>Job description</summary><p className="description">{job.description}</p></details>
       </article>)}
     </section>
+    </>}
   </main>;
 }
 createRoot(document.getElementById('root')).render(<App />);
