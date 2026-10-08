@@ -2,15 +2,17 @@
 
 A Python-backed workflow for finding suitable healthcare technology jobs, producing evidence-backed application drafts, and tracking outcomes. The employment workflow is the primary product; the repository is a portfolio demonstration of its engineering.
 
-## Current release: Phase 1
+## Current release: Phase 2A — source registry and manual evidence review
 
-Implemented: paste a job description; save it; detect a duplicate description; list and inspect saved jobs. React calls FastAPI; SQLAlchemy stores records in PostgreSQL; Alembic manages the initial schema. No LLM call, source-document ingestion, fit score, résumé generation, approval action, or submission integration is implemented yet.
+Implemented: paste/save/review job descriptions; register separate DOCX/PDF/TXT/MD source copies with SHA-256 and version links; add manual career facts with document or user-confirmation provenance; review them as pending, verified or rejected; inspect review history and stored-file integrity. React calls FastAPI; SQLAlchemy stores records in PostgreSQL; Alembic manages schema revisions. No LLM call, automatic text extraction, fit score, résumé generation, application approval, or submission integration is implemented yet. Fact verification is distinct from approval to submit an application.
 
 Start with [the macOS setup guide](docs/PHASE_1_MACOS.md). See [architecture](docs/ARCHITECTURE.md) and [database design](docs/DATABASE_DESIGN.md).
 
+For an existing Phase 1 installation, use [the Phase 2 update guide](docs/PHASE_2_MACOS.md). For a new installation, Phase 1's environment/startup commands still apply; `upgrade head` now creates all four application tables, health reports phase 2, and the full test suite has 15 tests.
+
 ## Source protections
 
-Original HTCMF and master résumés remain external, untouched source documents. Future ingestion will accept read-only copies, fingerprint them, and create new derived artifacts with unique version identifiers. The `private/` directory and `.env` are excluded from Git. This starter contains no personal career records or API keys.
+Original HTCMF and master résumés remain external, untouched source documents. Upload creates a new, read-only private copy under a UUID filename. The API does not offer source overwrite or deletion. New versions are new records; pending facts must be reviewed. The `private/` directory and `.env` are excluded from Git. The code and demo fixtures contain no personal career records or API keys.
 
 ## Repository structure
 
@@ -26,7 +28,7 @@ Original HTCMF and master résumés remain external, untouched source documents.
 ## Development roadmap
 
 1. **Phase 1 — foundation:** get intake working on macOS and confirm PostgreSQL persistence.
-2. **Phase 2 — verified evidence:** review current HTCMF/master résumés; ingest copies; curate verified career facts and source citations. Preserve applied/rejected role history to prevent repeat recommendations.
+2. **Phase 2 — verified evidence:** source registration and manual fact review implemented; next add extraction with reviewed candidates and richer evidence linking. Preserve applied/rejected role history to prevent repeat recommendations.
 3. **Phase 3 — matching:** extract requirements, review extraction, compute versioned fit scores and route to an appropriate master résumé. Begin with remote healthcare implementation, operations and analytics bridge roles; eligibility and the user's updated preferences govern routing.
 4. **Phase 4 — drafting:** generate structured drafts using only verified facts; show claim citations and unsupported requirements; export new résumé and cover-letter versions.
 5. **Phase 5 — review and tracking:** approve an exact packet, export for manual application, record submission and subsequent outcomes. Manual submission is the first complete MVP.
@@ -40,7 +42,7 @@ From `backend/`, after activating the virtual environment: `pytest -q`.
 
 From `frontend/`: `npm run build`.
 
-API tests use SQLite to check request validation, persistence within a test, retrieval, duplicate handling and absent submission routes. These tests do not prove PostgreSQL compatibility. The macOS guide includes a PostgreSQL migration and persistence smoke check. See [validation record](docs/VALIDATION.md) for checks actually run on this starter.
+API tests use SQLite to check jobs, source storage, review history, stale-review conflicts, rejected evidence, and migration preservation of existing jobs. These tests do not prove PostgreSQL compatibility. The macOS guides include PostgreSQL migration and persistence smoke checks. See [validation record](docs/VALIDATION.md) for checks actually run.
 
 ## Intended operating boundary
 

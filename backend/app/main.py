@@ -9,20 +9,25 @@ from sqlalchemy.orm import Session
 from app.db import get_session
 from app.models import Job
 from app.schemas import JobCreate, JobRead
+from app.evidence import router as evidence_router
 
-app = FastAPI(title="AI Career Application Agent", version="0.1.0")
+app = FastAPI(title="AI Career Application Agent", version="0.2.0")
+app.include_router(evidence_router)
 
 
 @app.get("/health")
 def health():
     """Process liveness only; readiness separately checks the database/schema."""
-    return {"status": "ok", "phase": 1, "submission_enabled": False}
+    return {"status": "ok", "phase": 2, "submission_enabled": False}
 
 
 @app.get("/ready")
 def ready(session: Session = Depends(get_session)):
     try:
         session.execute(text("SELECT 1 FROM jobs LIMIT 1"))
+        session.execute(text("SELECT 1 FROM source_documents LIMIT 1"))
+        session.execute(text("SELECT 1 FROM career_facts LIMIT 1"))
+        session.execute(text("SELECT 1 FROM fact_reviews LIMIT 1"))
     except SQLAlchemyError:
         raise HTTPException(503, "Database unavailable or migrations not applied")
     return {"status": "ready"}
