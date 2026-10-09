@@ -25,3 +25,11 @@ Build date: October 4, 2026 (America/New_York). Build environment: Linux, Python
 The test run emitted one upstream deprecation warning about Starlette's httpx TestClient integration. It did not fail the tests. Revisit the test-client dependency when upgrading the backend stack.
 
 `backend/requirements.lock.txt` records exact installed Python package versions, without the local editable package path. `frontend/package-lock.json` records npm package resolution. No original source documents, personal employment claims or API keys were used in validation.
+
+## Phase 2B bulk evidence
+
+22 backend tests passed in the build environment. New checks cover read-only preview, edited statements retaining immutable source excerpts, exact duplicates across attestation/document evidence, possible-overlap flags, invalid import atomicity, DOCX table paragraphs, missing/changed source integrity, PDF extraction rejection, separate batch review histories and stale revision rollback. React production build passed. PostgreSQL and browser checks for this update remain to be performed on the user's Mac. No real career fact was imported into a live database by these tests.
+
+## Fact correction update
+
+27 backend tests passed in the build environment; React production build passed. Corrections retain original source evidence and review history, create linked Pending replacements, support category-only changes and correction chains, block stale updates and reactivation of superseded facts, and roll back after commit failures. Migration 0003 preserves existing jobs, facts and reviews. PostgreSQL and correction-form browser validation remain to be completed on the user's Mac.

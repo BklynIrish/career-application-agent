@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import BulkEvidencePanel from './BulkEvidencePanel';
+import CorrectionForm from './CorrectionForm';
 
 const kinds = { htcmf: 'HTCMF', master_resume: 'Master résumé', supporting: 'Supporting document' };
 const bases = { user_confirmed: 'User-confirmed', document_supported: 'Document-supported', independently_documented: 'Independently documented' };
 
-function FactCard({ fact, sources, request, refresh }) {
+function FactCard({ fact, sources, corrections, request, refresh }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState(null);
@@ -29,13 +31,18 @@ function FactCard({ fact, sources, request, refresh }) {
     catch (error) { setMessage(error.message); }
   }
   const source = sources.find(item => item.id === fact.source_document_id);
+  const outgoing = corrections.find(item => item.original_fact_id === fact.id);
+  const incoming = corrections.find(item => item.replacement_fact_id === fact.id);
   return <article>
+    {outgoing && <p><strong>Superseded.</strong> Replacement ID: {outgoing.replacement_fact_id}. Select All or Pending to find the replacement.</p>}
+    {incoming && <p><strong>Corrected version.</strong> Original ID: {incoming.original_fact_id}<br />Reason: {incoming.reason}</p>}
     <p className={`badge ${fact.status}`}>{fact.status.toUpperCase()} · {fact.category}</p>
     <h3>{fact.statement}</h3>
     <p>{fact.provenance_kind === 'document' ? `Source: ${source?.original_filename || fact.source_document_id}` : 'Source: user confirmation'}</p>
     <p><strong>Locator:</strong> {fact.source_locator}</p>
     <p className="description"><strong>Evidence:</strong> {fact.evidence_note}</p>
-    <details><summary>Review this fact</summary>
+    {!outgoing && <CorrectionForm fact={fact} request={request} refresh={refresh} />}
+    {!outgoing && <details><summary>Review this fact</summary>
       <p>Verification records your assessment. It does not independently establish that the claim is true. To correct the statement, reject it and create a new fact.</p>
       <form onSubmit={review}>
         <label>Decision<select name="decision" value={decision} onChange={event => setDecision(event.target.value)}>
@@ -47,7 +54,7 @@ function FactCard({ fact, sources, request, refresh }) {
         <label>Review note<textarea name="note" required minLength={5} maxLength={5000} rows={3} placeholder="What you checked or confirmed, and any limitations" /></label>
         <button disabled={busy}>{busy ? 'Saving…' : 'Record review'}</button>
       </form>
-    </details>
+    </details>}
     <button type="button" className="secondary" onClick={showHistory}>View review history</button>
     {history && <div>{history.length === 0 ? <p>No reviews yet.</p> : history.map(item => <p key={item.id} className="description">
       {item.previous_status} → {item.decision}{item.verification_basis ? ` · ${bases[item.verification_basis]}` : ''}<br />
@@ -60,14 +67,23 @@ function FactCard({ fact, sources, request, refresh }) {
 export default function EvidencePanel({ request }) {
   const [sources, setSources] = useState([]);
   const [facts, setFacts] = useState([]);
+  const [corrections, setCorrections] = useState([]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [provenance, setProvenance] = useState('document');
   const [kind, setKind] = useState('htcmf');
   const [filter, setFilter] = useState('all');
   async function refresh() {
-    const [documents, evidence] = await Promise.all([request('/sources'), request('/facts')]);
-    setSources(documents); setFacts(evidence);
+    async function all(path) {
+      const rows = [];
+      for (let offset = 0; ; offset += 100) {
+        const page = await request(`${path}?limit=100&offset=${offset}`);
+        rows.push(...page);
+        if (page.length < 100) return rows;
+      }
+    }
+    const [documents, evidence, links] = await Promise.all([all('/sources'), all('/facts'), all('/fact-corrections')]);
+    setSources(documents); setFacts(evidence); setCorrections(links);
   }
   useEffect(() => { refresh().catch(error => setMessage(error.message)); }, []);
   async function upload(event) {
@@ -118,7 +134,7 @@ export default function EvidencePanel({ request }) {
         <button disabled={busy}>{busy ? 'Saving…' : 'Register source copy'}</button>
       </form>
       <p role="status" aria-live="polite">{message}</p>
-      <h3>Registered sources</h3><p>Showing up to 100 most recent source versions.</p>
+      <h3>Registered sources</h3><p>Registered source versions.</p>
       {sources.length === 0 && <p>No source documents registered yet.</p>}
       {sources.map(source => <article key={source.id}>
         <h3>{source.original_filename}</h3>
@@ -128,6 +144,7 @@ export default function EvidencePanel({ request }) {
         <button className="secondary" type="button" onClick={() => checkIntegrity(source.id)}>Check stored copy integrity</button>
       </article>)}
     </section>
+    <BulkEvidencePanel sources={sources} facts={facts} request={request} refresh={refresh} />
     <section><h2>Add a career fact</h2><p>Record one specific claim at a time. Every new fact starts pending.</p>
       <form onSubmit={addFact}>
         <label>Statement<textarea name="statement" required minLength={5} maxLength={5000} rows={3} /></label>
@@ -144,9 +161,9 @@ export default function EvidencePanel({ request }) {
         <button disabled={busy}>{busy ? 'Saving…' : 'Add pending fact'}</button>
       </form>
     </section>
-    <section><h2>Review career facts</h2><p>Showing up to 100 most recent facts. Review history distinguishes confirmation from documentary support.</p>
+    <section><h2>Review career facts</h2><p>Saved career facts. Review history distinguishes confirmation from documentary support.</p>
       <label>Filter<select value={filter} onChange={event => setFilter(event.target.value)}>{['all', 'pending', 'verified', 'rejected'].map(value => <option key={value}>{value}</option>)}</select></label>
-      {facts.filter(fact => filter === 'all' || fact.status === filter).map(fact => <FactCard key={fact.id} fact={fact} sources={sources} request={request} refresh={refresh} />)}
+      {facts.filter(fact => filter === 'all' || fact.status === filter).map(fact => <FactCard key={fact.id} fact={fact} sources={sources} corrections={corrections} request={request} refresh={refresh} />)}
       {facts.filter(fact => filter === 'all' || fact.status === filter).length === 0 && <p>No facts in this view yet.</p>}
     </section>
   </>;

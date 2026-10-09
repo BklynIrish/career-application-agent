@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.evidence_schemas import DocumentKind, FactCreate, FactRead, FactStatus, ReviewCreate, ReviewRead, SourceRead
-from app.models import CareerFact, FactReview, SourceDocument
+from app.models import CareerFact, FactReview, SourceDocument, FactCorrection
 
 router = APIRouter(tags=["Evidence"])
 MAX_SOURCE_BYTES = 10 * 1024 * 1024
@@ -141,11 +141,12 @@ def list_facts(status: FactStatus | None = None, limit: int = Query(100, ge=1, l
     return session.scalars(query.order_by(CareerFact.created_at.desc(), CareerFact.id).limit(limit).offset(offset)).all()
 
 
-@router.post("/facts/{fact_id}/reviews", response_model=FactRead)
-def review_fact(fact_id: str, payload: ReviewCreate, session: Session = Depends(get_session)):
+def apply_review(fact_id: str, payload: ReviewCreate, session: Session):
     fact = session.get(CareerFact, fact_id)
     if not fact:
         raise HTTPException(404, "Fact not found")
+    if payload.decision != "rejected" and session.scalar(select(FactCorrection).where(FactCorrection.original_fact_id == fact_id)):
+        raise HTTPException(409, "This fact was superseded; review its replacement instead")
     if fact.source_document_id and payload.decision == "verified":
         check_source(fact.source_document_id, session)
     previous = fact.status
@@ -159,6 +160,12 @@ def review_fact(fact_id: str, payload: ReviewCreate, session: Session = Depends(
     session.add(FactReview(fact_id=fact_id, revision=revision, previous_status=previous,
                           decision=payload.decision, verification_basis=payload.verification_basis,
                           note=payload.note, actor="local_user"))
+    return fact
+
+
+@router.post("/facts/{fact_id}/reviews", response_model=FactRead)
+def review_fact(fact_id: str, payload: ReviewCreate, session: Session = Depends(get_session)):
+    fact = apply_review(fact_id, payload, session)
     session.commit()
     session.refresh(fact)
     return fact

@@ -76,3 +76,17 @@ class FactReview(Base):
     note: Mapped[str] = mapped_column(Text)
     actor: Mapped[str] = mapped_column(String(50), default="local_user")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class FactCorrection(Base):
+    __tablename__ = "fact_corrections"
+    __table_args__ = (
+        UniqueConstraint("original_fact_id", name="uq_correction_original"),
+        UniqueConstraint("replacement_fact_id", name="uq_correction_replacement"),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    original_fact_id: Mapped[str] = mapped_column(ForeignKey("career_facts.id", ondelete="RESTRICT"))
+    replacement_fact_id: Mapped[str] = mapped_column(ForeignKey("career_facts.id", ondelete="RESTRICT"))
+    reason: Mapped[str] = mapped_column(Text)
+    actor: Mapped[str] = mapped_column(String(50), default="local_user")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

@@ -21,3 +21,6 @@ nav { display: flex; gap: 12px; }
 .rejected { background: #fde4e4; }
 .pending { background: #fff0ce; }
 .hash { overflow-wrap: anywhere; font-family: monospace; }
+
+.check-label { display: flex; align-items: flex-start; gap: .6rem; margin: .8rem 0; }
+.check-label input[type="checkbox"] { width: auto; flex-shrink: 0; margin-top: .3rem; }
