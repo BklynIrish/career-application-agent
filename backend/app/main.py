@@ -1,3 +1,5 @@
+from app.corrections import router as corrections_router
+from app.bulk_evidence import router as bulk_router
 import hashlib
 import json
 
@@ -28,6 +30,7 @@ def ready(session: Session = Depends(get_session)):
         session.execute(text("SELECT 1 FROM source_documents LIMIT 1"))
         session.execute(text("SELECT 1 FROM career_facts LIMIT 1"))
         session.execute(text("SELECT 1 FROM fact_reviews LIMIT 1"))
+        session.execute(text("SELECT 1 FROM fact_corrections LIMIT 1"))
     except SQLAlchemyError:
         raise HTTPException(503, "Database unavailable or migrations not applied")
     return {"status": "ready"}
@@ -67,3 +70,7 @@ def get_job(job_id: str, session: Session = Depends(get_session)):
     if record is None:
         raise HTTPException(404, "Job not found")
     return record
+
+app.include_router(bulk_router)
+
+app.include_router(corrections_router)
